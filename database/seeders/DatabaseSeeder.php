@@ -86,6 +86,10 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $documentFiles = [
+            'Document 1' => 'https://commons.wikimedia.org/wiki/Special:FilePath/Floor_Plan_1.png',
+        ];
+
         // Inspection Request Detail screen
         $request = InspectionRequest::create([
             'project_id' => $hartland->id,
@@ -118,11 +122,11 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        foreach (['Document 1', 'Document 2'] as $doc) {
+        foreach ($documentFiles as $name => $url) {
             Document::create([
                 'inspection_request_id' => $request->id,
-                'name' => $doc,
-                'url' => '#',
+                'name' => $name,
+                'url' => $url,
             ]);
         }
 
@@ -192,11 +196,11 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
 
-            foreach (['Document 1', 'Document 2'] as $doc) {
+            foreach ($documentFiles as $name => $url) {
                 Document::create([
                     'inspection_request_id' => $inspection->id,
-                    'name' => $doc,
-                    'url' => '#',
+                    'name' => $name,
+                    'url' => $url,
                 ]);
             }
 
