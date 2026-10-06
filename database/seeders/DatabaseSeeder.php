@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
 
         $subActivities = [];
         foreach ($configs as [$name, $activity, $e, $q, $a, $count]) {
-            $subActivities[$name] = SubActivity::create([
+            $subActivities[$seahaven->id.'|'.$name] = SubActivity::create([
                 'project_id' => $seahaven->id,
                 'activity_id' => $activity->id,
                 'name' => $name,
@@ -68,13 +68,31 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Other projects only get the sub-activities they use
+        $extras = [
+            [$crest, 'Floor Tiling', $dryFloor],
+            [$hartland, 'Floor Tiling', $dryFloor],
+            [$hartland, 'GI Box Fixing', $giBox],
+        ];
+        foreach ($extras as [$project, $name, $activity]) {
+            $subActivities[$project->id.'|'.$name] = SubActivity::create([
+                'project_id' => $project->id,
+                'activity_id' => $activity->id,
+                'name' => $name,
+                'level_engineer' => false,
+                'level_qcs' => true,
+                'level_qaqc' => true,
+                'random_inspection_count' => null,
+            ]);
+        }
+
         // Inspection Request Detail screen
         $request = InspectionRequest::create([
             'project_id' => $hartland->id,
             'division_id' => $finishing->id,
             'sub_division_id' => $tile->id,
             'activity_id' => $dryFloor->id,
-            'sub_activity_id' => $subActivities['Floor Tiling']->id,
+            'sub_activity_id' => $subActivities[$hartland->id.'|Floor Tiling']->id,
             'tower' => 'Tower A',
             'floor' => 'A - P4',
             'unit' => 'A0402',
@@ -153,7 +171,7 @@ class DatabaseSeeder extends Seeder
                 'division_id' => $division->id,
                 'sub_division_id' => $activity->sub_division_id,
                 'activity_id' => $activity->id,
-                'sub_activity_id' => $subActivities[$subName]->id,
+                'sub_activity_id' => $subActivities[$project->id.'|'.$subName]->id,
                 'tower' => $tower,
                 'floor' => $floor,
                 'unit' => $unit,
@@ -187,7 +205,7 @@ class DatabaseSeeder extends Seeder
                 'tower' => $tower,
                 'division_id' => $division->id,
                 'activity_id' => $activity->id,
-                'sub_activity_id' => $subActivities[$subName]->id,
+                'sub_activity_id' => $subActivities[$project->id.'|'.$subName]->id,
                 'inspection_request_id' => $inspection->id,
                 'defect_type' => $defect,
                 'defect_count' => $count,

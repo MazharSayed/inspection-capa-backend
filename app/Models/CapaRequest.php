@@ -41,7 +41,7 @@ class CapaRequest extends Model
             ->when($filters['division_id'] ?? null, fn ($q, $v) => $q->where('division_id', $v))
             ->when($filters['activity_id'] ?? null, fn ($q, $v) => $q->where('activity_id', $v))
             ->when($filters['sub_division_id'] ?? null, fn ($q, $v) => $q->whereHas('activity', fn ($a) => $a->where('sub_division_id', $v)))
-            ->when($filters['sub_activity'] ?? null, fn ($q, $v) => $q->whereHas('subActivity', fn ($a) => $a->where('name', $v)))
+            ->when($filters['sub_activity_id'] ?? null, fn ($q, $v) => $q->where('sub_activity_id', $v))
             ->when($filters['created_at'] ?? null, fn ($q, $v) => $q->whereDate('capa_created_at', $v))
             ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
             ->when($filters['q'] ?? null, fn ($q, $v) => $q->where(function ($w) use ($v) {

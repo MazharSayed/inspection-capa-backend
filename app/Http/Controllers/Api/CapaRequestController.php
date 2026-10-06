@@ -14,7 +14,7 @@ class CapaRequestController extends Controller
         $capaRequests = CapaRequest::with(['project', 'division', 'activity', 'subActivity'])
             ->filter($request->only([
                 'project_id', 'division_id', 'sub_division_id', 'activity_id',
-                'sub_activity', 'created_at', 'status', 'q',
+                'sub_activity_id', 'created_at', 'status', 'q',
             ]))
             ->orderByDesc('id')
             ->get();

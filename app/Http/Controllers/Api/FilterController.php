@@ -18,7 +18,7 @@ class FilterController extends Controller
             'divisions' => Division::orderBy('name')->get(['id', 'name']),
             'sub_divisions' => SubDivision::orderBy('name')->get(['id', 'division_id', 'name']),
             'activities' => Activity::orderBy('name')->get(['id', 'sub_division_id', 'name']),
-            'sub_activities' => SubActivity::select('name')->distinct()->orderBy('name')->get(),
+            'sub_activities' => SubActivity::orderBy('name')->get(['id', 'project_id', 'activity_id', 'name']),
             'statuses' => ['open', 'closed', 'rejected'],
         ]);
     }
