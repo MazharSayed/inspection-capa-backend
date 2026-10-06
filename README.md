@@ -1,59 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Inspection CAPA Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel API for inspection configuration, CAPA requests and inspection approvals.
 
-## About Laravel
+Frontend (Vue 3): https://github.com/MazharSayed/inspection-capa-frontend
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+PHP 8.2+, Composer, MySQL
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Setup
 
-## Learning Laravel
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Create a MySQL database named `inspection_capa` and set the `DB_*` values in `.env`, then:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+php artisan migrate:fresh --seed
+php artisan serve
+```
 
-## Laravel Sponsors
+The API runs at http://127.0.0.1:8000/api.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Endpoints
 
-### Premium Partners
+| Method | URL | Description |
+|---|---|---|
+| GET | `/api/filters` | Dropdown options for all filters, including the relations used for cascading |
+| GET | `/api/inspection-configs` | Sub-activity configuration list |
+| GET | `/api/inspection-configs/{id}` | One configuration |
+| PUT | `/api/inspection-configs/{id}` | Update levels and random inspection count |
+| GET | `/api/capa-requests` | CAPA requests list |
+| GET | `/api/inspection-requests` | Inspection requests list |
+| GET | `/api/inspection-requests/{id}` | Request details, documents and approval steps |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+List endpoints accept these query filters:
 
-## Contributing
+- `inspection-configs`: `project_id`, `division_id`, `sub_division_id`, `activity_id`, `q`
+- `capa-requests`: `project_id`, `division_id`, `sub_division_id`, `activity_id`, `sub_activity_id`, `created_at` (YYYY-MM-DD), `status`, `q`
+- `inspection-requests`: `project_id`, `division_id`, `sub_division_id`, `activity_id`, `status`, `q`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+`PUT /api/inspection-configs/{id}` accepts `level_engineer`, `level_qcs`, `level_qaqc` (booleans) and `random_inspection_count` (integer, 0 or more, or null).
 
-## Code of Conduct
+A Postman collection is in `docs/postman_collection.json`. Set its `base_url` variable to `http://127.0.0.1:8000/api`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Structure
 
-## Security Vulnerabilities
+- Migrations: one per table (projects, divisions, sub_divisions, activities, sub_activities, inspection_requests, approvals, documents, capa_requests)
+- Filtering lives in model scopes, response shaping in API Resources, validation in a Form Request
+- `DatabaseSeeder` loads the sample data used in the screens
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Hierarchy: Project, Division, Sub-Division, Activity, Sub-Activity. A project is linked to the rest of the hierarchy through its sub-activities, which is what the frontend uses to cascade the filters.
 
-## License
+## Notes
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Built with the help of AI tools (Claude and GitHub Copilot). I reviewed and tested the code myself.
+- The Division, Sub-Division and Activity names in the seeder are sample data, because the designs don't show that hierarchy.
+- Sobha Seahaven has the 10 sub-activities from the design. The other projects have only the ones their CAPA rows use, so the Configuration list shows 13 rows with no project selected.
+- Inspection request 1 is the one shown in the detail design. Each CAPA row has its own inspection request.
