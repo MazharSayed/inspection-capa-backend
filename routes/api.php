@@ -21,6 +21,7 @@ Route::put('inspection-configs/{inspectionConfig}', [InspectionConfigController:
 Route::get('capa-requests', [CapaRequestController::class, 'index']);
 
 Route::get('inspection-requests/{inspectionRequest}', [InspectionRequestController::class, 'show']);
+Route::get('inspection-requests', [InspectionRequestController::class, 'index']);
 
 
 

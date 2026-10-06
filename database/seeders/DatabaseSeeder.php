@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Models\SubActivity;
 use App\Models\SubDivision;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -108,26 +109,91 @@ class DatabaseSeeder extends Seeder
         }
 
         // CAPA Requests List screen
+        // CAPA Requests List screen: every row gets its own inspection request
         $capas = [
-            [$seahaven, 'Tower A', $finishing, $dryFloor, 'Floor Tiling', 'UCM Leak', 50, 'Engineer, QAQC', 'rejected', '2023-12-01 23:00:00'],
-            [$seahaven, 'Tower A', $finishing, $dryFloor, 'Floor Tiling', 'Glass Bend', 80, 'Engineer, QAQC', 'open', '2023-12-01 23:00:00'],
-            [$crest, 'Tower B', $finishing, $dryFloor, 'Floor Tiling', 'Wire not connected', 30, 'Engineer, QAQC', 'rejected', '2023-12-01 23:00:00'],
-            [$hartland, 'Tower A', $mep, $giBox, 'GI Box Fixing', 'Screw missing', 60, 'QAQC', 'open', '2023-12-01 23:00:00'],
-            [$seahaven, 'Tower C', $finishing, $dryFloor, 'Floor Tiling', 'FCD connection issue', 105, 'QAQC', 'closed', '2023-12-01 23:00:00'],
+            // project, tower, division, activity, sub-activity, defect, count, approver, status, floor, unit, technician
+            [$seahaven, 'Tower A', $finishing, $dryFloor, 'Floor Tiling', 'UCM Leak', 50, 'Engineer, QAQC', 'rejected', 'A - P2', 'A0204', 'Rahul Verma'],
+            [$seahaven, 'Tower A', $finishing, $dryFloor, 'Floor Tiling', 'Glass Bend', 80, 'Engineer, QAQC', 'open', 'A - P6', 'A0611', 'Sanjay Patil'],
+            [$crest, 'Tower B', $finishing, $dryFloor, 'Floor Tiling', 'Wire not connected', 30, 'Engineer, QAQC', 'rejected', 'B - P3', 'B0307', 'Imran Shaikh'],
+            [$hartland, 'Tower A', $mep, $giBox, 'GI Box Fixing', 'Screw missing', 60, 'QAQC', 'open', 'A - P1', 'A0108', 'Deepak Nair'],
+            [$seahaven, 'Tower C', $finishing, $dryFloor, 'Floor Tiling', 'FCD connection issue', 105, 'QAQC', 'closed', 'C - P5', 'C0502', 'Mohan Kulkarni'],
         ];
-        foreach ($capas as [$project, $tower, $division, $activity, $subName, $defect, $count, $approver, $status, $at]) {
+
+        $team = [
+            ['Engineer - Approver', 'Ankita Bhat'],
+            ['QCS - Approver', 'Alok Sharma'],
+            ['QAQC - Approver', 'Vikas Gupta'],
+        ];
+
+        $steps = [
+            'rejected' => [
+                ['approved', 'Request for Approval to @Vikas'],
+                ['approved', 'Request for Approval to @Vikas'],
+                ['rejected', 'Request Rejected and send for Approval to @Ankita'],
+            ],
+            'open' => [
+                ['approved', 'Request for Approval to @Alok'],
+                ['pending', null],
+                ['pending', null],
+            ],
+            'closed' => [
+                ['approved', 'Request for Approval to @Alok'],
+                ['approved', 'Request for Approval to @Vikas'],
+                ['approved', 'Checked and approved'],
+            ],
+        ];
+
+        $requestStatus = ['rejected' => 'rejected', 'open' => 'pending', 'closed' => 'approved'];
+
+        foreach ($capas as $index => [$project, $tower, $division, $activity, $subName, $defect, $count, $approver, $status, $floor, $unit, $technician]) {
+            $day = Carbon::create(2023, 12, $index + 1, 11, 45);
+
+            $inspection = InspectionRequest::create([
+                'project_id' => $project->id,
+                'division_id' => $division->id,
+                'sub_division_id' => $activity->sub_division_id,
+                'activity_id' => $activity->id,
+                'sub_activity_id' => $subActivities[$subName]->id,
+                'tower' => $tower,
+                'floor' => $floor,
+                'unit' => $unit,
+                'technician' => $technician,
+                'status' => $requestStatus[$status],
+                'requested_at' => $day,
+            ]);
+
+            foreach ($steps[$status] as $position => [$stepStatus, $comment]) {
+                Approval::create([
+                    'inspection_request_id' => $inspection->id,
+                    'sequence' => $position + 1,
+                    'role' => $team[$position][0],
+                    'approver_name' => $team[$position][1],
+                    'status' => $stepStatus,
+                    'comment' => $comment,
+                    'acted_at' => $stepStatus === 'pending' ? null : $day->copy()->addDays($position === 2 ? 1 : 0),
+                ]);
+            }
+
+            foreach (['Document 1', 'Document 2'] as $doc) {
+                Document::create([
+                    'inspection_request_id' => $inspection->id,
+                    'name' => $doc,
+                    'url' => '#',
+                ]);
+            }
+
             CapaRequest::create([
                 'project_id' => $project->id,
                 'tower' => $tower,
                 'division_id' => $division->id,
                 'activity_id' => $activity->id,
                 'sub_activity_id' => $subActivities[$subName]->id,
-                'inspection_request_id' => $request->id,
+                'inspection_request_id' => $inspection->id,
                 'defect_type' => $defect,
                 'defect_count' => $count,
                 'approver' => $approver,
                 'status' => $status,
-                'capa_created_at' => $at,
+                'capa_created_at' => '2023-12-01 23:00:00',
             ]);
         }
     }
